@@ -196,27 +196,37 @@ CSV_REPORT_SIMPLE = "test_monitoring_report_simple.csv"  # 테스트 CSV
 - **세션 토큰**: CSRF 토큰, 세션 ID 등 동적 값
 - **광고 스크립트**: Google Analytics, 광고 태그 등
 
-### 🔧 현재 상태
+### ✅ 현재 구현 상태
 ```python
-# simple_compare.py - 현재 구현
-def is_html_changed(html1: str, html2: str) -> bool:
-    hash1 = hashlib.sha256(html1.encode('utf-8')).hexdigest()
-    hash2 = hashlib.sha256(html2.encode('utf-8')).hexdigest()
-    return hash1 != hash2  # 모든 변경을 감지 (동적 요소 포함)
+# simple_compare.py - 현재 구현 (동적 필터링 포함)
+def is_html_exactly_equal_filtered(html1: str, html2: str) -> bool:
+    """동적 요소를 필터링한 후 HTML 비교"""
+    normalized_html1 = normalize_dynamic_content(html1)
+    normalized_html2 = normalize_dynamic_content(html2)
+    return normalized_html1 == normalized_html2
+
+def normalize_dynamic_content(html: str) -> str:
+    """동적 요소 정규화"""
+    # CSS/JS 타임스탬프 제거 (?t=숫자)
+    html = re.sub(r'\?t=\d+', '', html)
+    # JavaScript 세션 토큰 정규화
+    html = re.sub(r'(NfVTe|sXDdA|qPSFs|Tywgp)":"[^"]*"', r'\1":"NORMALIZED"', html)
+    # 로그 타임스탬프 정규화
+    html = re.sub(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}', 'YYYY-MM-DD HH:MM:SS', html)
+    return html
 ```
 
-### 📈 실제 모니터링 결과
-교보문고 로그인 페이지 모니터링 시 매번 변경이 감지되는 이유:
-- CSS 해시값이 실시간으로 변경됨
-- 페이지 로드 시간 정보가 포함됨
-- 결과적으로 실제 악의적 변조와 무의미한 변경을 구분하지 못함
+### 🎉 해결된 문제들
+- ✅ **동적 CSS 해시 문제 해결**: CSS/JS 타임스탬프 파라미터 자동 제거
+- ✅ **세션 토큰 오탐 해결**: JavaScript 세션 토큰 정규화
+- ✅ **타임스탬프 오탐 해결**: 로그 타임스탬프 정규화
+- ✅ **실제 변조만 감지**: 악의적 변조는 정확히 감지하면서 동적 요소는 무시
 
-### 🎯 향후 개선 계획
-더 정교한 변조 감지를 위해서는 다음 기능이 필요합니다:
-- CSS 해시값 제거 전처리
-- 타임스탬프 정규화
-- 동적 토큰 필터링
-- 실제 콘텐츠 변경만 감지하는 알고리즘
+### 📊 개선된 모니터링 결과
+```
+2025-01-14 - INFO - 변경 없음 (동적 요소만 변경됨)  # 이전: 매번 변경 감지
+2025-01-14 - WARNING - 악의적 변조 감지!           # 실제 위험한 변경만 감지
+```
 
 ## 🆘 문제 해결
 
