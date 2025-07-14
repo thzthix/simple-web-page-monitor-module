@@ -33,8 +33,7 @@ simple-web-page-monitor-module/
 ├── config.py              # 운영용 설정 파일
 ├── config_prod.py         # 프로덕션 설정 백업
 ├── config_test.py         # 테스트용 설정 파일
-├── simple_test.py         # ⭐ 간단한 변조 감지 테스트 (권장)
-├── test_detection_logic.py # 고급 테스트 스크립트
+├── simple_test.py         # ⭐ 변조 감지 테스트 스크립트
 └── README.md              # 이 파일
 ```
 
@@ -50,22 +49,19 @@ pip install requests beautifulsoup4
 python monitor.py
 ```
 
-### 3. 변조 감지 테스트 실행 (권장)
+### 3. 변조 감지 테스트 실행 (필수)
 ```bash
-# 간단하고 직관적인 테스트
+# 변조 감지 시스템 테스트
 python simple_test.py
-
-# 또는 고급 테스트
-python test_detection_logic.py
 ```
 
-**⚠️ 중요: 시스템을 테스트하려면 반드시 위 테스트 스크립트 중 하나를 실행해야 합니다!**
+**⚠️ 중요: 시스템을 테스트하려면 반드시 위 테스트 스크립트를 실행해야 합니다!**
 
-## 🧪 로컬 테스트 방법
+## 🧪 변조 감지 테스트
 
-### ⭐ 간단한 테스트 (권장)
+### ⭐ simple_test.py 실행
 ```bash
-# 가장 간단하고 직관적인 테스트
+# 변조 감지 시스템 테스트
 python simple_test.py
 ```
 
@@ -91,75 +87,28 @@ changed = is_html_changed(original_html, modified_html)
 log_message = f"[변조유형] 원본해시: {original_hash[:16]}..., 변조해시: {modified_hash[:16]}..., 감지결과: {changed}"
 ```
 
-### 고급 테스트
-```bash
-# 더 상세한 테스트 (모니터링 시스템 포함)
-python test_detection_logic.py
-```
-
-이 스크립트는 다음 과정을 자동으로 수행합니다:
-1. **테스트 환경 정리**: 기존 테스트 파일들 삭제
-2. **테스트용 설정 생성**: 별도의 DB, 로그, CSV 파일 사용
-3. **원본 페이지 다운로드**: 교보문고 로그인 페이지 가져오기
-4. **테스트 파일 생성**: 다양한 변조 시나리오의 HTML 파일들 생성
-5. **로컬 서버 시작**: Python 내장 HTTP 서버로 테스트 파일들 서빙
-6. **변조 감지 테스트**: 각 변조 시나리오에 대한 감지 로직 테스트
-7. **모니터링 시스템 테스트**: 실제 모니터링 시스템으로 테스트
-8. **결과 분석**: 테스트 결과 요약 및 성공/실패 판정
-
-### 📁 테스트 파일들
-
-#### simple_test.py 실행 시 생성되는 파일들:
+### 📁 테스트 실행 시 생성되는 파일들:
 - `kyobo_login_original.html`: 원본 교보문고 로그인 페이지
 - `kyobo_login_url_modified.html`: URL 변조 버전
 - `kyobo_login_script_modified.html`: 악성 스크립트 추가 버전  
 - `kyobo_login_text_modified.html`: 텍스트 변조 버전
 - `simple_test.log`: 상세한 테스트 로그
 
-#### test_detection_logic.py 실행 시 생성되는 파일들:
-- `test_snapshots_monitor.db`: 테스트용 SQLite 데이터베이스
-- `test_monitor.log`: 테스트용 로그 파일
-- `test_monitoring_report_simple.csv`: 테스트용 CSV 보고서
-- `test_pages/`: 테스트용 HTML 파일들
-- `config_test.py`: 테스트용 설정 파일
-
-### 수동 테스트
-```bash
-# 1. 테스트 파일들만 생성
-python -c "
-from test_detection_logic import download_original_page, create_test_files
-html = download_original_page()
-if html:
-    create_test_files(html)
-    print('테스트 파일들이 생성되었습니다.')
-"
-
-# 2. 로컬 서버 수동 시작
-cd test_pages
-python -m http.server 8000
-
-# 3. 별도 터미널에서 테스트
-python test_detection_logic.py
-```
-
 ### 테스트 시나리오
 1. **URL 변조**: 교보문고 URL을 악의적 사이트로 변경
-2. **콘텐츠 변조**: 악성 JavaScript 스크립트 삽입
+2. **악성 스크립트**: 키로거 등 악성 JavaScript 코드 삽입
 3. **텍스트 변조**: "교보문고" → "가짜문고" 등 텍스트 변경
-4. **미묘한 변조**: 공백 추가 등 미세한 변경
 
 ## 📊 결과 확인
 
-### 실제 운영용 파일들
+### 운영용 파일들
 - `monitor.log`: 상세한 모니터링 로그
 - `snapshots_monitor.db`: SQLite 데이터베이스
 - `monitoring_report_simple.csv`: 요약 보고서
 
 ### 테스트용 파일들
-- `test_monitor.log`: 테스트용 로그 파일
-- `test_snapshots_monitor.db`: 테스트용 SQLite 데이터베이스
-- `test_monitoring_report_simple.csv`: 테스트용 CSV 보고서
-- `test_pages/`: 테스트용 HTML 파일들
+- `simple_test.log`: 테스트 실행 로그
+- `kyobo_login_*.html`: 테스트용 HTML 파일들
 
 ### 데이터베이스
 - 스냅샷 테이블: 타임스탬프, URL, 해시, HTML 내용, 변경 여부
