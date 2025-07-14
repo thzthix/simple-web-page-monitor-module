@@ -9,7 +9,7 @@ import requests
 import os
 import hashlib
 import datetime
-from simple_compare import is_html_changed
+from simple_compare import is_html_changed, is_html_exactly_equal_filtered
 
 # 테스트 로그 파일 경로
 TEST_LOG_FILE = "simple_test.log"
@@ -136,14 +136,18 @@ def test_detection():
                 modified_hash = hashlib.sha256(modified_html.encode('utf-8')).hexdigest()
                 hash_different = original_hash != modified_hash
                 
-                # 변조 감지
+                # 변조 감지 (기존 방식)
                 changed = is_html_changed(original_html, modified_html)
                 
+                # 변조 감지 (필터링 방식)
+                filtered_changed = not is_html_exactly_equal_filtered(original_html, modified_html)
+                
                 # 로그에 상세 정보 기록
-                log_message = f"[{description}] 원본해시: {original_hash[:16]}..., 변조해시: {modified_hash[:16]}..., 해시일치: {not hash_different}, 감지결과: {changed}"
+                log_message = f"[{description}] 원본해시: {original_hash[:16]}..., 변조해시: {modified_hash[:16]}..., 기존방식: {changed}, 필터링방식: {filtered_changed}"
                 log_test_message(log_message)
                 
-                print(f"  결과: {'변조 감지됨' if changed else '변조 감지 안됨'}")
+                print(f"  기존 방식 결과: {'변조 감지됨' if changed else '변조 감지 안됨'}")
+                print(f"  필터링 방식 결과: {'변조 감지됨' if filtered_changed else '변조 감지 안됨'}")
                 print(f"  파일: {filename}")
                 print(f"  크기: {len(modified_html):,}자")
                 
@@ -151,6 +155,7 @@ def test_detection():
                     'description': description,
                     'filename': filename,
                     'detected': changed,
+                    'filtered_detected': filtered_changed,
                     'size': len(modified_html)
                 })
                 
@@ -160,6 +165,7 @@ def test_detection():
                     'description': description,
                     'filename': filename,
                     'detected': False,
+                    'filtered_detected': False,
                     'size': 0
                 })
         
@@ -169,20 +175,34 @@ def test_detection():
         print("=" * 50)
         
         success_count = 0
+        filtered_success_count = 0
         for result in results:
             status = "✅" if result['detected'] else "❌"
-            result_msg = f"{status} {result['description']}: {'감지됨' if result['detected'] else '감지 안됨'}"
+            filtered_status = "✅" if result['filtered_detected'] else "❌"
+            result_msg = f"{status} {result['description']} (기존): {'감지됨' if result['detected'] else '감지 안됨'}"
+            filtered_msg = f"{filtered_status} {result['description']} (필터링): {'감지됨' if result['filtered_detected'] else '감지 안됨'}"
             print(result_msg)
+            print(filtered_msg)
             log_test_message(result_msg)
+            log_test_message(filtered_msg)
             if result['detected']:
                 success_count += 1
+            if result['filtered_detected']:
+                filtered_success_count += 1
         
-        summary_msg = f"📈 전체 결과: {success_count}/{len(results)} 성공"
+        summary_msg = f"📈 기존 방식 결과: {success_count}/{len(results)} 성공"
+        filtered_summary_msg = f"📈 필터링 방식 결과: {filtered_success_count}/{len(results)} 성공"
         print(f"\n{summary_msg}")
+        print(filtered_summary_msg)
         log_test_message(summary_msg)
+        log_test_message(filtered_summary_msg)
         
-        if success_count == len(results):
-            final_msg = "🎉 모든 변조가 정상적으로 감지되었습니다!"
+        if success_count == len(results) and filtered_success_count == len(results):
+            final_msg = "🎉 모든 변조가 두 방식 모두에서 정상적으로 감지되었습니다!"
+            print(final_msg)
+            log_test_message(final_msg)
+        elif filtered_success_count == len(results):
+            final_msg = "✅ 필터링 방식에서 모든 변조가 감지되었습니다!"
             print(final_msg)
             log_test_message(final_msg)
         else:

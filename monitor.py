@@ -9,7 +9,7 @@ import hashlib
 import logging
 from datetime import datetime
 from database import setup_database, get_latest_snapshot, save_snapshot
-from simple_compare import is_html_changed
+from simple_compare import is_html_exactly_equal, is_html_exactly_equal_filtered
 from fetcher import fetch_page
 from logger import setup_logging
 from csv_report import save_to_csv_simple
@@ -23,20 +23,27 @@ def fetch_target_html(logger):
     return html_content
 
 def detect_change(html_content, logger):
+    """
+    HTML 변경 감지 (동적 요소 필터링 적용)
+    타임스탬프, 세션 토큰 등은 무시하고 실제 콘텐츠 변경만 감지
+    """
     latest_snapshot = get_latest_snapshot(TARGET_URL)
     if not latest_snapshot:
-        logger.info("[단순 모드] 첫 번째 스냅샷을 생성합니다.")
+        logger.info("첫 번째 스냅샷을 생성합니다.")
         return True, '첫 번째 스냅샷'
 
     previous_html = latest_snapshot.get('html_content', None)
     assert previous_html is not None, "DB에 스냅샷이 있는데 html_content가 None인 경우는 비정상입니다."
-    change_detected = is_html_changed(previous_html, html_content)
+    
+    # 동적 요소 필터링 후 비교
+    change_detected = not is_html_exactly_equal_filtered(previous_html, html_content)
     if change_detected:
-        logger.warning("[단순 모드] 전체 HTML 해시가 변경되었습니다.")
-        change_details = '전체 HTML 해시 변경'
+        logger.warning("실제 콘텐츠가 변경되었습니다.")
+        change_details = '실제 콘텐츠 변경 (동적 요소 제외)'
     else:
-        logger.info("[단순 모드] 변경 없음 (해시 동일)")
-        change_details = '변경사항 없음'
+        logger.info("변경 없음 (동적 요소만 변경됨)")
+        change_details = '동적 요소만 변경됨 (실제 콘텐츠 동일)'
+    
     return change_detected, change_details
 
 def save_results(html_content, change_detected, change_details):
@@ -49,7 +56,7 @@ def monitor_once():
     print("[DEBUG] monitor_once 시작")
     logger = setup_logging()
     print("[DEBUG] setup_logging() 완료")
-    logger.info("[단순 모드] 전체 HTML 해시만 비교합니다.")
+    logger.info("동적 요소 필터링 후 HTML 콘텐츠를 비교합니다.")
     setup_database()
     html_content = fetch_target_html(logger)
     if not html_content:
