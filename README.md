@@ -57,7 +57,6 @@ CREATE TABLE snapshots (
     url TEXT NOT NULL,                     -- 모니터링 대상 URL
     content_hash TEXT NOT NULL,            -- HTML 내용의 SHA256 해시값
     html_content TEXT NOT NULL,            -- 전체 HTML 내용 (원본)
-    key_elements TEXT NOT NULL,            -- 추출된 핵심 요소들 (JSON 형태)
     change_detected BOOLEAN DEFAULT FALSE, -- 변경 감지 여부
     change_details TEXT                    -- 변경 상세 내용
 )
@@ -66,40 +65,26 @@ CREATE TABLE snapshots (
 ### 💾 저장되는 데이터 예시
 ```json
 {
-  "timestamp": "2025-07-11T14:06:41.314879",
+  "id": 1,
+  "timestamp": "2025-07-14T14:06:41.314879",
   "url": "https://mmbr.kyobobook.co.kr/login",
-  "content_hash": "468caaf989b8ccbd3f2c...",
-  "html_content": "<!DOCTYPE html><html>...</html>",  // 전체 HTML (약 46KB)
-  "key_elements": {
-    "forms": [],  // 폼 요소들
-    "scripts": [  // 스크립트 태그들의 src 속성들
-      "/assets/js/init.js",
-      "/assets/js/vars.js",
-      "https://contents.kyobobook.co.kr/resources/fo/js/common-vars.js?t=25710133734"
-    ],
-    "links": [    // 링크 태그들의 href 속성들
-      // CSS 파일들, 기타 리소스들
-    ],
-    "images": [], // 이미지 파일들
-    "titles": [], // 페이지 제목들
-    "metas": [],  // 메타 태그들
-    "buttons": [], // 버튼 요소들
-    "inputs": [],  // 입력 필드들
-    "divs_with_id": [] // ID가 있는 DIV 요소들
-  }
+  "content_hash": "468caaf989b8ccbd3f2c891abcdef12345...",
+  "html_content": "<!DOCTYPE html><html>...</html>",  // 전체 HTML (원본)
+  "change_detected": false,
+  "change_details": "변경사항 없음"
 }
 ```
 
 ### 🔍 저장 방식의 장점
 1. **전체 HTML 보존**: 원본 HTML을 그대로 저장하여 필요시 전체 내용 확인 가능
 2. **해시 기반 빠른 비교**: SHA256 해시로 전체 내용 변경 여부를 빠르게 판단
-3. **구체적 요소 분석**: 다양한 HTML 요소를 분석하여 정확한 변경 내용 파악
+3. **단순하고 안정적**: 복잡한 요소 분석 없이 전체 HTML 변경만 감지
 4. **시간 기록**: 각 스냅샷의 정확한 생성 시간 기록
 
 ## 5. CSV 요약 보고서
 
 ### 📋 CSV 파일 구조
-모니터링 결과는 `monitoring_report.csv` 파일에 다음과 같은 형태로 저장됩니다:
+모니터링 결과는 `monitoring_report_simple.csv` 파일에 다음과 같은 형태로 저장됩니다:
 
 | 컬럼명 | 설명 |
 |--------|------|
@@ -107,12 +92,9 @@ CREATE TABLE snapshots (
 | 시간 | 스냅샷 생성 시간 (HH:MM:SS) |
 | URL | 모니터링 대상 URL |
 | 변경감지 | 변경감지 여부 (변경감지/변경없음) |
-| 변경내용 | 구체적인 변경 내용 (예: "스크립트 변경; 페이지 제목 변경") |
+| 변경내용 | 변경 내용 (예: "전체 HTML 해시 변경", "변경사항 없음") |
 | HTML크기(문자) | HTML 파일의 크기 |
 | 해시값(앞10자리) | SHA256 해시의 앞 10자리 |
-| 스크립트수 | 페이지의 스크립트 태그 개수 |
-| 링크수 | 페이지의 링크 태그 개수 |
-| 폼수 | 페이지의 폼 태그 개수 |
 
 ### 📊 CSV 보고서 생성 방법
 
@@ -121,8 +103,8 @@ CREATE TABLE snapshots (
 
 #### 수동 생성
 ```bash
-# 기존 데이터베이스에서 CSV 보고서 생성
-py -3.11 generate_report.py
+# 기존 데이터베이스에서 CSV 보고서 생성 (해당 기능은 현재 구현되지 않음)
+# py -3.11 generate_report.py
 ```
 
 ### 📈 CSV 보고서 활용
@@ -140,32 +122,22 @@ pip install requests beautifulsoup4
 
 ## 7. 사용 방법
 
-### 분석 모드 선택 (간단/상세)
+### 모니터링 모드
 
-이 모듈은 두 가지 분석 모드를 지원하며, 각 모드별로 별도의 CSV 보고서가 생성됩니다:
+이 모듈은 **단순 모드**로 동작하며, 전체 HTML의 해시값만 비교하여 변경 여부를 판단합니다:
 
-- **단순 모드 (기본값)**: 전체 HTML의 해시값만 비교하여 변경 여부만 판단합니다. (가장 빠르고 간단)
+- **단순 모드**: 전체 HTML의 SHA256 해시값만 비교하여 변경 여부를 판단합니다. (가장 빠르고 간단)
   - 결과는 `monitoring_report_simple.csv`에 저장됩니다.
   - 컬럼: 날짜, 시간, URL, 변경감지, 변경내용, HTML크기, 해시값(앞10자리)
-- **상세 모드**: HTML을 파싱하여 각종 요소별로 변경 내역을 상세하게 분석합니다.
-  - 결과는 `monitoring_report_detailed.csv`에 저장됩니다.
-  - 컬럼: 날짜, 시간, URL, 변경감지, 변경내용, HTML크기, 해시값(앞10자리), 스크립트수, 링크수, 폼수, 이미지수, 제목수, 메타태그수, 버튼수, 입력필드수, DIV수
 
 #### 실행 예시
 
 ```bash
-# 단순(해시) 비교 모드 (기본값)
+# 단순(해시) 비교 모드
 py -3.11 monitor.py
-
-# 상세 분석 모드
-py -3.11 monitor.py --mode detailed
-
-# 명시적으로 단순 모드 실행
-py -3.11 monitor.py --mode simple
 ```
 
-- **단순 모드**는 전체 HTML이 바뀌었는지 아닌지만 빠르게 감지하며, 최소 정보만 기록합니다.
-- **상세 모드**는 어떤 요소가 바뀌었는지까지 구체적으로 알려주고, 모든 요소별 개수를 기록합니다.
+이 방식은 전체 HTML이 바뀌었는지 아닌지만 빠르게 감지하며, 최소한의 정보만 기록합니다.
 
 ### 수동 실행
 1.  프로젝트 디렉토리(`web_page_monitor`)로 이동합니다.
