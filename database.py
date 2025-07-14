@@ -11,49 +11,49 @@ from config import DATABASE_PATH
 
 def setup_database():
     """Initializes the database and creates the snapshots table if it doesn't exist."""
-    conn = sqlite3.connect(DATABASE_PATH)
-    cursor = conn.cursor()
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS snapshots (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        timestamp TEXT NOT NULL,
-        url TEXT NOT NULL,
-        content_hash TEXT NOT NULL,
-        html_content TEXT NOT NULL,
-        change_detected BOOLEAN DEFAULT FALSE,
-        change_details TEXT
-    )
-    """)
-    conn.commit()
-    conn.close()
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS snapshots (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT NOT NULL,
+            url TEXT NOT NULL,
+            content_hash TEXT NOT NULL,
+            html_content TEXT NOT NULL,
+            html_size INTEGER,
+            change_detected BOOLEAN DEFAULT FALSE,
+            change_details TEXT
+        )
+        """)
+        conn.commit()
 
 def get_latest_snapshot(url):
     """Retrieves the most recent snapshot for a given URL from the database."""
-    conn = sqlite3.connect(DATABASE_PATH)
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT timestamp, content_hash, html_content FROM snapshots WHERE url = ? ORDER BY timestamp DESC LIMIT 1",
-        (url,)
-    )
-    result = cursor.fetchone()
-    conn.close()
-    if result:
-        return {
-            "timestamp": result[0],
-            "hash": result[1],
-            "html_content": result[2]
-        }
-    return None
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT timestamp, content_hash, html_content, html_size FROM snapshots WHERE url = ? ORDER BY timestamp DESC LIMIT 1",
+            (url,)
+        )
+        result = cursor.fetchone()
+        if result:
+            return {
+                "timestamp": result[0],
+                "hash": result[1],
+                "html_content": result[2],
+                "html_size": result[3]
+            }
+        return None
 
-def save_snapshot(url, content_hash, html_content, change_detected=False, change_details=None):
+def save_snapshot(url, content_hash, html_content, html_size=0, change_detected=False, change_details=None):
     """Saves a new snapshot to the database."""
-    conn = sqlite3.connect(DATABASE_PATH)
-    cursor = conn.cursor()
-    timestamp = datetime.now().isoformat()
-    cursor.execute(
-        "INSERT INTO snapshots (timestamp, url, content_hash, html_content, change_detected, change_details) VALUES (?, ?, ?, ?, ?, ?)",
-        (timestamp, url, content_hash, html_content, change_detected, change_details)
-    )
-    conn.commit()
-    conn.close()
-    return timestamp 
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        cursor = conn.cursor()
+        timestamp = datetime.now().isoformat()
+        
+        cursor.execute(
+            "INSERT INTO snapshots (timestamp, url, content_hash, html_content, html_size, change_detected, change_details) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (timestamp, url, content_hash, html_content, html_size, change_detected, change_details)
+        )
+        conn.commit()
+        return timestamp 

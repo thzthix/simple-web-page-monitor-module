@@ -41,7 +41,8 @@ def detect_change(html_content, logger):
 
 def save_results(html_content, change_detected, change_details):
     content_hash = hashlib.sha256(html_content.encode('utf-8')).hexdigest()
-    timestamp = save_snapshot(TARGET_URL, content_hash, html_content, change_detected, change_details)
+    html_size = len(html_content) if html_content else 0
+    timestamp = save_snapshot(TARGET_URL, content_hash, html_content, html_size, change_detected, change_details)
     return timestamp, content_hash
 
 def monitor_once():

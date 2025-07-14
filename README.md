@@ -57,6 +57,7 @@ CREATE TABLE snapshots (
     url TEXT NOT NULL,                     -- 모니터링 대상 URL
     content_hash TEXT NOT NULL,            -- HTML 내용의 SHA256 해시값
     html_content TEXT NOT NULL,            -- 전체 HTML 내용 (원본)
+    html_size INTEGER,                     -- HTML 콘텐츠 크기 (문자 수)
     change_detected BOOLEAN DEFAULT FALSE, -- 변경 감지 여부
     change_details TEXT                    -- 변경 상세 내용
 )
@@ -70,6 +71,7 @@ CREATE TABLE snapshots (
   "url": "https://mmbr.kyobobook.co.kr/login",
   "content_hash": "468caaf989b8ccbd3f2c891abcdef12345...",
   "html_content": "<!DOCTYPE html><html>...</html>",  // 전체 HTML (원본)
+  "html_size": 46832,  // HTML 콘텐츠 크기 (문자 수)
   "change_detected": false,
   "change_details": "변경사항 없음"
 }
@@ -79,7 +81,8 @@ CREATE TABLE snapshots (
 1. **전체 HTML 보존**: 원본 HTML을 그대로 저장하여 필요시 전체 내용 확인 가능
 2. **해시 기반 빠른 비교**: SHA256 해시로 전체 내용 변경 여부를 빠르게 판단
 3. **단순하고 안정적**: 복잡한 요소 분석 없이 전체 HTML 변경만 감지
-4. **시간 기록**: 각 스냅샷의 정확한 생성 시간 기록
+4. **콘텐츠 크기 추적**: HTML 크기 변화를 통한 페이지 변경 패턴 분석 가능
+5. **시간 기록**: 각 스냅샷의 정확한 생성 시간 기록
 
 ## 5. CSV 요약 보고서
 
