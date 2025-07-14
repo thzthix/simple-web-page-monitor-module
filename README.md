@@ -186,6 +186,38 @@ CSV_REPORT_SIMPLE = "test_monitoring_report_simple.csv"  # 테스트 CSV
 4. **네트워크**: 안정적인 인터넷 연결이 필요합니다
 5. **테스트 파일 분리**: 테스트용 파일들은 운영용과 완전히 분리됩니다
 
+## 🚨 알려진 제한사항
+
+### 동적 CSS 해시 문제
+현재 시스템은 **단순 SHA256 해시 비교**를 사용하므로 다음과 같은 무의미한 변경도 감지합니다:
+
+- **동적 CSS 파일 해시**: `styles-abc123.css` → `styles-def456.css`
+- **타임스탬프 변경**: 페이지 로드 시간, 세션 시간 등
+- **세션 토큰**: CSRF 토큰, 세션 ID 등 동적 값
+- **광고 스크립트**: Google Analytics, 광고 태그 등
+
+### 🔧 현재 상태
+```python
+# simple_compare.py - 현재 구현
+def is_html_changed(html1: str, html2: str) -> bool:
+    hash1 = hashlib.sha256(html1.encode('utf-8')).hexdigest()
+    hash2 = hashlib.sha256(html2.encode('utf-8')).hexdigest()
+    return hash1 != hash2  # 모든 변경을 감지 (동적 요소 포함)
+```
+
+### 📈 실제 모니터링 결과
+교보문고 로그인 페이지 모니터링 시 매번 변경이 감지되는 이유:
+- CSS 해시값이 실시간으로 변경됨
+- 페이지 로드 시간 정보가 포함됨
+- 결과적으로 실제 악의적 변조와 무의미한 변경을 구분하지 못함
+
+### 🎯 향후 개선 계획
+더 정교한 변조 감지를 위해서는 다음 기능이 필요합니다:
+- CSS 해시값 제거 전처리
+- 타임스탬프 정규화
+- 동적 토큰 필터링
+- 실제 콘텐츠 변경만 감지하는 알고리즘
+
 ## 🆘 문제 해결
 
 ### BeautifulSoup 설치 오류
