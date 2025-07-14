@@ -1,281 +1,272 @@
-# Web Page Change Monitor
+# 간이 웹페이지 변경 모니터
 
-## 1. 프로젝트 개요
+교보문고 엠앤비알(M&BR) 로그인 페이지의 변조를 감지하는 모니터링 시스템입니다.
 
-이 프로젝트는 지정된 웹 페이지(로그인 페이지 등)의 HTML 소스 코드 변화를 주기적으로 감지하기 위한 간단한 파이썬 모듈입니다.
+## 🚀 주요 기능
 
-매일 스크립트를 실행하여 대상 페이지의 스냅샷을 생성하고, 이전 스냅샷과 비교하여 변경된 내용을 사용자에게 알려줍니다. 이를 통해 페이지의 위변조나 예기치 않은 변경을 신속하게 파악할 수 있습니다.
+### 1. 내용 기반 변경 감지
+- **동적 요소 필터링**: CSS 해시, 타임스탬프 등 무의미한 변경 무시
+- **실제 내용 변경 감지**: HTML 구조와 텍스트 내용의 실제 변경만 감지
+- **악의적 스크립트 감지**: 악의적인 JavaScript 코드 삽입 탐지
 
-- **모니터링 대상 URL:** `https://mmbr.kyobobook.co.kr/login`
+### 2. 구체적 변경사항 분석
+- 스크립트 태그 추가/수정
+- 외부 링크 추가
+- 폼 구조 변경
+- 의심스러운 JavaScript 코드 (`eval`, `document.write` 등)
 
-## 2. 핵심 기능 및 사용 기술
+### 3. 데이터 저장
+- SQLite 데이터베이스에 스냅샷 저장
+- CSV 보고서 생성
+- 상세한 로그 기록
 
-이 모듈은 단순한 텍스트 비교를 넘어, 보다 안정적이고 정확한 변경 감지를 위해 다음 기술들을 사용합니다.
+## 📁 파일 구조
 
-- **데이터 저장:**
-  - **SQLite:** 모든 스냅샷 기록을 단일 `snapshots.db` 파일에 저장하여 관리합니다. 각 기록은 타임스탬프, URL, HTML 해시, 원본 HTML, 그리고 추출된 핵심 요소를 포함합니다.
-- **변경 감지 방식:**
-  - **해시 비교:** 스크래핑한 HTML 콘텐츠의 `SHA256` 해시값을 계산하여 이전 해시값과 비교함으로써 전체 내용의 변경 여부를 빠르게 판단합니다.
-  - **구체적 요소 분석:** `BeautifulSoup4`를 사용하여 페이지의 다양한 DOM 요소를 분석하고 비교합니다. 이를 통해 어떤 부분이 변경되었는지 구체적으로 파악할 수 있습니다.
-- **주요 라이브러리:**
-  - `requests`: 웹 페이지의 HTML을 가져옵니다.
-  - `BeautifulSoup4`: HTML을 파싱하고 데이터를 추출합니다.
-  - `sqlite3`, `hashlib`, `json`, `datetime`: 데이터베이스 연동, 해시 계산, 데이터 직렬화, 시간 기록 등 파이썬 기본 라이브러리를 활용합니다.
-
-## 3. 변경사항 감지 방식
-
-### 🔍 해시 기반 변경 감지
-모니터링 시스템은 **SHA256 해시 비교**를 통해 변경을 감지합니다:
-
-| 감지 방식 | 설명 | 장점 |
-|----------|------|------|
-| **전체 HTML 해시** | 페이지 전체 HTML의 SHA256 해시값 계산 | 빠른 성능, 모든 변경 감지 |
-| **크기 추적** | HTML 콘텐츠의 문자 수 기록 | 변경 규모 파악 가능 |
-| **타임스탬프** | 각 스냅샷의 정확한 생성 시간 | 변경 이력 추적 |
-
-### 📊 변경사항 기록 예시
 ```
-변경 내용: 전체 HTML 해시 변경
-HTML 크기: 45,895자 → 45,907자 (12자 증가)
-```
-
-## 4. 데이터베이스 저장 형태
-
-### 📊 테이블 구조
-스냅샷 데이터는 `snapshots` 테이블에 다음과 같은 구조로 저장됩니다:
-
-```sql
-CREATE TABLE snapshots (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,  -- 자동 증가 ID
-    timestamp TEXT NOT NULL,               -- 스냅샷 생성 시간 (ISO 형식)
-    url TEXT NOT NULL,                     -- 모니터링 대상 URL
-    content_hash TEXT NOT NULL,            -- HTML 내용의 SHA256 해시값
-    html_content TEXT NOT NULL,            -- 전체 HTML 내용 (원본)
-    html_size INTEGER,                     -- HTML 콘텐츠 크기 (문자 수)
-    change_detected BOOLEAN DEFAULT FALSE, -- 변경 감지 여부
-    change_details TEXT                    -- 변경 상세 내용
-)
+simple-web-page-monitor-module/
+├── monitor.py              # 메인 모니터링 로직
+├── simple_compare.py       # HTML 비교 및 악의적 변경 감지
+├── fetcher.py             # 웹페이지 가져오기
+├── database.py            # 데이터베이스 관리
+├── csv_report.py          # CSV 보고서 생성
+├── logger.py              # 로깅 설정
+├── config.py              # 운영용 설정 파일
+├── config_prod.py         # 프로덕션 설정 백업
+├── config_test.py         # 테스트용 설정 파일
+├── simple_test.py         # ⭐ 간단한 변조 감지 테스트 (권장)
+├── test_detection_logic.py # 고급 테스트 스크립트
+└── README.md              # 이 파일
 ```
 
-### 💾 저장되는 데이터 예시
-```json
-{
-  "id": 1,
-  "timestamp": "2025-07-14T14:06:41.314879",
-  "url": "https://mmbr.kyobobook.co.kr/login",
-  "content_hash": "468caaf989b8ccbd3f2c891abcdef12345...",
-  "html_content": "<!DOCTYPE html><html>...</html>",  // 전체 HTML (원본)
-  "html_size": 46832,  // HTML 콘텐츠 크기 (문자 수)
-  "change_detected": false,
-  "change_details": "변경사항 없음"
-}
-```
+## 🛠️ 설치 및 실행
 
-### 🔍 저장 방식의 장점
-1. **전체 HTML 보존**: 원본 HTML을 그대로 저장하여 필요시 전체 내용 확인 가능
-2. **해시 기반 빠른 비교**: SHA256 해시로 전체 내용 변경 여부를 빠르게 판단
-3. **단순하고 안정적**: 복잡한 요소 분석 없이 전체 HTML 변경만 감지
-4. **콘텐츠 크기 추적**: HTML 크기 변화를 통한 페이지 변경 패턴 분석 가능
-5. **시간 기록**: 각 스냅샷의 정확한 생성 시간 기록
-
-## 5. CSV 요약 보고서
-
-### 📋 CSV 파일 구조
-모니터링 결과는 `monitoring_report_simple.csv` 파일에 다음과 같은 형태로 저장됩니다:
-
-| 컬럼명 | 설명 |
-|--------|------|
-| 날짜 | 스냅샷 생성 날짜 (YYYY-MM-DD) |
-| 시간 | 스냅샷 생성 시간 (HH:MM:SS) |
-| URL | 모니터링 대상 URL |
-| 변경감지 | 변경감지 여부 (변경감지/변경없음) |
-| 변경내용 | 변경 내용 (예: "전체 HTML 해시 변경", "변경사항 없음") |
-| HTML크기(문자) | HTML 파일의 크기 |
-| 해시값(앞10자리) | SHA256 해시의 앞 10자리 |
-
-### 📊 CSV 보고서 생성 방법
-
-#### 자동 생성
-- 매번 모니터링 실행 시 자동으로 CSV 파일이 업데이트됩니다.
-
-#### 수동 생성
-```bash
-# 기존 데이터베이스에서 CSV 보고서 생성 (해당 기능은 현재 구현되지 않음)
-# py -3.11 generate_report.py
-```
-
-### 📈 CSV 보고서 활용
-- **Excel/Google Sheets**: CSV 파일을 열어서 데이터 분석
-- **통계 분석**: 변경 감지율, 트렌드 분석 등
-- **보고서 작성**: 정기적인 모니터링 보고서 작성
-
-## 6. 설정 및 설치
-
-모듈을 실행하기 위해 필요한 파이썬 라이브러리를 설치해야 합니다.
-
+### 1. 의존성 설치
 ```bash
 pip install requests beautifulsoup4
 ```
 
-## 7. 사용 방법
-
-### 모니터링 모드
-
-이 모듈은 **단순 모드**로 동작하며, 전체 HTML의 해시값만 비교하여 변경 여부를 판단합니다:
-
-- **단순 모드**: 전체 HTML의 SHA256 해시값만 비교하여 변경 여부를 판단합니다. (가장 빠르고 간단)
-  - 결과는 `monitoring_report_simple.csv`에 저장됩니다.
-  - 컬럼: 날짜, 시간, URL, 변경감지, 변경내용, HTML크기, 해시값(앞10자리)
-
-#### 실행 예시
-
+### 2. 기본 모니터링 실행
 ```bash
-# 단순(해시) 비교 모드
-py -3.11 monitor.py
+python monitor.py
 ```
 
-이 방식은 전체 HTML이 바뀌었는지 아닌지만 빠르게 감지하며, 최소한의 정보만 기록합니다.
+### 3. 변조 감지 테스트 실행 (권장)
+```bash
+# 간단하고 직관적인 테스트
+python simple_test.py
 
-### 수동 실행
-1.  프로젝트 디렉토리(`web_page_monitor`)로 이동합니다.
-2.  다음 명령어를 사용하여 파이썬 스크립트를 실행합니다.
-
-    ```bash
-    # Windows
-    py -3.11 monitor.py
-
-    # macOS / Linux
-    python3 monitor.py
-    ```
-
-### 자동 실행 설정 (매일 1회)
-
-#### 방법 1: Windows 작업 스케줄러 (추천)
-
-1. **작업 스케줄러 열기**
-   - `Win + R` → `taskschd.msc` 입력
-   - 또는 검색에서 "작업 스케줄러" 검색
-
-2. **새 작업 만들기**
-   - 오른쪽 패널에서 "작업 만들기" 클릭
-   - 이름: "웹페이지 모니터링"
-   - "가장 높은 수준의 권한으로 실행" 체크
-
-3. **트리거 설정**
-   - "트리거" 탭 → "새로 만들기"
-   - "매일" 선택
-   - 시작 시간 설정 (예: 오전 9시)
-   - "사용" 체크
-
-4. **동작 설정**
-   - "동작" 탭 → "새로 만들기"
-   - 동작: "프로그램 시작"
-   - 프로그램/스크립트: `C:\Users\KICO\web_page_monitor\run_monitor.bat`
-   - 시작 위치: `C:\Users\KICO\web_page_monitor`
-
-5. **조건 설정**
-   - "조건" 탭에서 필요시 설정 조정
-   - "네트워크 연결이 가능한 경우에만 작업 시작" 체크 권장
-
-#### 방법 2: PowerShell 스크립트 (고급 사용자)
-
-```powershell
-# PowerShell을 관리자 권한으로 실행 후
-.\schedule_monitor.ps1
+# 또는 고급 테스트
+python test_detection_logic.py
 ```
 
--   **최초 실행 시:** `snapshots.db` 파일이 생성되고, 페이지의 첫 번째 스냅샷이 데이터베이스에 저장됩니다.
--   **두 번째 실행부터:** 현재 페이지 상태를 가장 최근에 저장된 스냅샷과 비교하고, 변경 사항이 있을 경우 상세 내역을 터미널에 출력합니다. 이후 현재 상태를 새로운 스냅샷으로 DB에 저장합니다.
+**⚠️ 중요: 시스템을 테스트하려면 반드시 위 테스트 스크립트 중 하나를 실행해야 합니다!**
 
-## 8. 로그 및 알림
+## 🧪 로컬 테스트 방법
 
-### 로그 파일
-- 모든 실행 기록은 `monitor.log` 파일에 저장됩니다
-- 콘솔과 파일에 동시에 로그가 기록됩니다
-
-### 변경사항 알림
-- 변경사항이 감지되면 상세한 로그와 함께 알림이 표시됩니다
-- 구체적으로 어떤 요소가 변경되었는지 명확하게 표시됩니다
-- 현재는 로그 기반 알림만 제공 (이메일, 슬랙 등 추가 가능)
-
-## 9. 프로젝트 구조
-
-### 📁 모듈화된 파일 구조
-프로젝트는 기능별로 모듈화되어 있어 유지보수가 용이합니다:
-
-```
-web_page_monitor/
-│
-├── monitor.py              # 메인 스크립트 (모니터링 실행)
-├── config.py               # 설정 파일 (URL, 경로, 알림 설정 등)
-├── database.py             # 데이터베이스 관리 모듈
-├── html_analyzer.py        # HTML 분석 모듈
-├── csv_reporter.py         # CSV 보고서 모듈
-├── generate_report.py      # CSV 보고서 생성 스크립트
-├── run_monitor.bat         # Windows 배치 파일 (자동 실행용)
-├── schedule_monitor.ps1    # PowerShell 스케줄링 스크립트
-├── snapshots.db            # SQLite 데이터베이스 파일
-├── monitoring_report.csv   # CSV 요약 보고서 파일
-├── monitor.log             # 실행 로그 파일
-├── .gitignore              # Git 무시 파일 목록
-└── README.md               # 프로젝트 설명 파일
+### ⭐ 간단한 테스트 (권장)
+```bash
+# 가장 간단하고 직관적인 테스트
+python simple_test.py
 ```
 
-### 🔧 모듈별 기능
+`simple_test.py`는 변조 감지 시스템을 쉽게 테스트할 수 있는 스크립트입니다:
 
-| 모듈 | 기능 | 설명 |
-|------|------|------|
-| **monitor.py** | 메인 실행 | 전체 모니터링 프로세스 조정 |
-| **config.py** | 설정 관리 | URL, 경로, 알림 설정 등 중앙 관리 |
-| **database.py** | 데이터베이스 관리 | SQLite DB 생성, 저장, 조회 |
-| **html_analyzer.py** | HTML 분석 | 웹페이지 스크래핑, 요소 추출, 비교 |
-| **csv_reporter.py** | CSV 보고서 | CSV 파일 생성 및 관리 |
-| **generate_report.py** | 보고서 생성 | 기존 데이터에서 CSV 보고서 생성 |
+**🔍 동작 과정:**
+1. 교보문고 로그인 페이지 원본 다운로드
+2. 3가지 변조 버전 자동 생성 (URL 변조, 악성 스크립트, 텍스트 변조)
+3. 로컬 HTTP 서버 자동 시작
+4. 변조 감지 로직 테스트 및 결과 출력
+5. 상세한 로그 파일 생성 (`simple_test.log`)
 
-### ⚙️ 설정 파일 (config.py)
-
-모든 설정은 `config.py` 파일에서 중앙 관리됩니다:
-
+**📊 핵심 코드 설명:**
 ```python
-# 모니터링 대상 URL
-TARGET_URL = "https://mmbr.kyobobook.co.kr/login"
+# 해시 계산으로 변경 감지
+original_hash = hashlib.sha256(original_html.encode('utf-8')).hexdigest()
+modified_hash = hashlib.sha256(modified_html.encode('utf-8')).hexdigest()
 
-# 파일 경로 설정
-LOG_FILE = "monitor.log"
-DATABASE_FILE = "snapshots.db"
-CSV_REPORT_FILE = "monitoring_report.csv"
+# 변조 감지 로직 실행
+changed = is_html_changed(original_html, modified_html)
 
-# 모니터링 요소 우선순위
-MONITORING_PRIORITY = [
-    ElementType.TITLES,      # 페이지 제목 변경
-    ElementType.FORMS,       # 폼 구조 변경
-    ElementType.INPUTS,      # 입력 필드 변경
-    # ... 기타 요소들
-]
-
-# 알림 설정
-ENABLE_EMAIL_NOTIFICATIONS = False
-ENABLE_SLACK_NOTIFICATIONS = False
-ENABLE_TELEGRAM_NOTIFICATIONS = False
+# 결과 로깅
+log_message = f"[변조유형] 원본해시: {original_hash[:16]}..., 변조해시: {modified_hash[:16]}..., 감지결과: {changed}"
 ```
 
-## 10. TODO 및 향후 개선사항
+### 고급 테스트
+```bash
+# 더 상세한 테스트 (모니터링 시스템 포함)
+python test_detection_logic.py
+```
 
-### 🔄 동적 요소 제거 기능 (TODO)
-현재는 모든 HTML 요소를 분석하지만, 향후 다음 동적 요소들을 제거하여 의미있는 변경만 감지하도록 개선할 예정입니다:
+이 스크립트는 다음 과정을 자동으로 수행합니다:
+1. **테스트 환경 정리**: 기존 테스트 파일들 삭제
+2. **테스트용 설정 생성**: 별도의 DB, 로그, CSV 파일 사용
+3. **원본 페이지 다운로드**: 교보문고 로그인 페이지 가져오기
+4. **테스트 파일 생성**: 다양한 변조 시나리오의 HTML 파일들 생성
+5. **로컬 서버 시작**: Python 내장 HTTP 서버로 테스트 파일들 서빙
+6. **변조 감지 테스트**: 각 변조 시나리오에 대한 감지 로직 테스트
+7. **모니터링 시스템 테스트**: 실제 모니터링 시스템으로 테스트
+8. **결과 분석**: 테스트 결과 요약 및 성공/실패 판정
 
-- **광고 스크립트 제거**: Google Analytics, Facebook Pixel 등
-- **타임스탬프 제거**: 시간 관련 요소들
-- **랜덤 토큰 제거**: 세션 토큰, CSRF 토큰 등
-- **CSS 클래스 난독화 제거**: 빌드 시 생성되는 해시 클래스
+### 📁 테스트 파일들
 
-### 📧 알림 기능 확장 (TODO)
-- 이메일 알림 기능
-- Slack 웹훅 알림
-- Telegram 봇 알림
+#### simple_test.py 실행 시 생성되는 파일들:
+- `kyobo_login_original.html`: 원본 교보문고 로그인 페이지
+- `kyobo_login_url_modified.html`: URL 변조 버전
+- `kyobo_login_script_modified.html`: 악성 스크립트 추가 버전  
+- `kyobo_login_text_modified.html`: 텍스트 변조 버전
+- `simple_test.log`: 상세한 테스트 로그
 
-### 🔧 추가 개선사항
-- 다중 URL 모니터링 지원
-- 웹 대시보드 제공
-- 변경사항 히스토리 시각화
-- 성능 최적화
+#### test_detection_logic.py 실행 시 생성되는 파일들:
+- `test_snapshots_monitor.db`: 테스트용 SQLite 데이터베이스
+- `test_monitor.log`: 테스트용 로그 파일
+- `test_monitoring_report_simple.csv`: 테스트용 CSV 보고서
+- `test_pages/`: 테스트용 HTML 파일들
+- `config_test.py`: 테스트용 설정 파일
+
+### 수동 테스트
+```bash
+# 1. 테스트 파일들만 생성
+python -c "
+from test_detection_logic import download_original_page, create_test_files
+html = download_original_page()
+if html:
+    create_test_files(html)
+    print('테스트 파일들이 생성되었습니다.')
+"
+
+# 2. 로컬 서버 수동 시작
+cd test_pages
+python -m http.server 8000
+
+# 3. 별도 터미널에서 테스트
+python test_detection_logic.py
+```
+
+### 테스트 시나리오
+1. **URL 변조**: 교보문고 URL을 악의적 사이트로 변경
+2. **콘텐츠 변조**: 악성 JavaScript 스크립트 삽입
+3. **텍스트 변조**: "교보문고" → "가짜문고" 등 텍스트 변경
+4. **미묘한 변조**: 공백 추가 등 미세한 변경
+
+## 📊 결과 확인
+
+### 실제 운영용 파일들
+- `monitor.log`: 상세한 모니터링 로그
+- `snapshots_monitor.db`: SQLite 데이터베이스
+- `monitoring_report_simple.csv`: 요약 보고서
+
+### 테스트용 파일들
+- `test_monitor.log`: 테스트용 로그 파일
+- `test_snapshots_monitor.db`: 테스트용 SQLite 데이터베이스
+- `test_monitoring_report_simple.csv`: 테스트용 CSV 보고서
+- `test_pages/`: 테스트용 HTML 파일들
+
+### 데이터베이스
+- 스냅샷 테이블: 타임스탬프, URL, 해시, HTML 내용, 변경 여부
+
+### CSV 보고서
+- 컬럼: 날짜, 시간, URL, 변경감지, 변경내용, HTML크기, 해시값
+
+## 🔧 설정
+
+### config.py (운영용)
+```python
+TARGET_URL = "https://mmbr.kyobobook.co.kr/login"  # 모니터링 대상
+LOG_FILE = "monitor.log"                            # 로그 파일
+DATABASE_PATH = "snapshots_monitor.db"              # 데이터베이스 파일
+CSV_REPORT_SIMPLE = "monitoring_report_simple.csv"  # CSV 보고서
+```
+
+### config_test.py (테스트용)
+```python
+TARGET_URL = "http://localhost:8000/original.html"  # 테스트 대상
+LOG_FILE = "test_monitor.log"                       # 테스트 로그 파일
+DATABASE_PATH = "test_snapshots_monitor.db"         # 테스트 데이터베이스
+CSV_REPORT_SIMPLE = "test_monitoring_report_simple.csv"  # 테스트 CSV
+```
+
+## 🚨 변경 감지 로직
+
+### 1. 내용 기반 비교
+- 외부 CSS 링크 제거 (내부 스타일은 유지)
+- 일부 meta 태그 제거 (viewport, generator)
+- 동적 data 속성 제거 (보안 관련은 유지)
+- 공백 정리 (의미있는 공백은 유지)
+
+### 2. 악의적 변경 감지
+- 스크립트 태그 추가/수정
+- 외부 링크 추가
+- 폼 구조 변경
+- 의심스러운 JavaScript 패턴:
+  - `eval()`
+  - `document.write`
+  - `innerHTML =`
+  - `<iframe>`
+  - `javascript:`
+  - `onload=`, `onclick=`
+
+## 📈 성능 및 안정성
+
+### 네트워크 안정성
+- 30초 타임아웃 설정
+- User-Agent 헤더 설정
+- 10MB HTML 크기 제한
+
+### 데이터베이스 안정성
+- `with` 문을 사용한 안전한 연결 관리
+- 자동 커밋 및 연결 해제
+
+### 에러 처리
+- 네트워크 오류 처리
+- HTML 파싱 오류 처리
+- 데이터베이스 오류 처리
+
+## 🔍 모니터링 결과 예시
+
+```
+2024-01-15 10:30:15 - INFO - [내용 기반 모드] 실제 HTML 내용과 악의적 스크립트를 모두 감지합니다.
+2024-01-15 10:30:16 - WARNING - [내용 기반 모드] 내용 변경: 스크립트 추가, 의심스러운 내용
+2024-01-15 10:30:16 - INFO - 모니터링 완료
+```
+
+## ⚠️ 주의사항
+
+1. **BeautifulSoup 의존성**: `beautifulsoup4` 패키지가 필요합니다
+2. **테스트 환경**: 로컬 테스트 시 포트 8000이 사용됩니다
+3. **데이터 백업**: 중요한 데이터는 별도로 백업하세요
+4. **네트워크**: 안정적인 인터넷 연결이 필요합니다
+5. **테스트 파일 분리**: 테스트용 파일들은 운영용과 완전히 분리됩니다
+
+## 🆘 문제 해결
+
+### BeautifulSoup 설치 오류
+```bash
+pip install beautifulsoup4 lxml
+```
+
+### 포트 충돌
+```bash
+# 다른 포트 사용
+python -m http.server 8080
+```
+
+### 데이터베이스 오류
+```bash
+# 운영용 데이터베이스 파일 삭제 후 재생성
+rm snapshots_monitor.db
+python monitor.py
+```
+
+### 테스트 실패 시
+```bash
+# 테스트 파일들 정리 후 재시도
+rm -rf test_pages test_*.db test_*.log test_*.csv
+python test_detection_logic.py
+```
+
+### 테스트 파일 정리
+```bash
+# 테스트용 파일들만 삭제
+rm -f test_*.db test_*.log test_*.csv
+rm -rf test_pages
+```
