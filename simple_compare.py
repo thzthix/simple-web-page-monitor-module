@@ -54,6 +54,9 @@ def normalize_dynamic_content(html: str) -> str:
     # 5. 브라우저가 생성하는 파일 경로 차이 정규화
     normalized = re.sub(r'교보문고\d*_files', '교보문고_files', normalized)
     
+    # 6. kjkOT 보안 객체 전체 필터링 (멀티라인 대응)
+    normalized = re.sub(r'var kjkOT = \{.*?\};', 'var kjkOT = {SECURITY_TOKENS};', normalized, flags=re.DOTALL)
+    
     return normalized
 
 def is_html_changed_filtered(html1: str, html2: str) -> bool:
