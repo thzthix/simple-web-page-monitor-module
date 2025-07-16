@@ -29,15 +29,20 @@ def normalize_dynamic_content(html: str) -> str:
     HTML에서 동적 요소들을 정규화하여 실제 콘텐츠 변경만 감지할 수 있도록 함
     
     제거/정규화하는 요소들:
-    - CSS/JS 파일의 타임스탬프 파라미터 (?t=숫자)
+    - CSS/JS 파일의 타임스탬프/버전 파라미터 (?t=숫자, ?v=날짜, ?r=날짜)
     - JavaScript 세션/보안 토큰 (ErW76 객체 등)
+    - JavaScript 변수 내 날짜/시간 값
+    - JavaScript 변수 내 IP 주소
+    - JavaScript 변수 내 API 키/플러그인 키
     - 브라우저 생성 HTML 메타데이터
     - 로그 타임스탬프
     """
     normalized = html
     
-    # 1. CSS/JS 파일의 타임스탬프 파라미터 제거 (?t=숫자)
-    normalized = re.sub(r'\?t=\d+', '?t=TIMESTAMP', normalized)
+    # 1. CSS/JS 파일의 타임스탬프/버전 파라미터 제거 (?t=숫자, ?v=날짜, ?r=날짜)
+    normalized = re.sub(r'\?[tv]=\d{4}\.\d{2}\.\d{2}(?:\.\d+)?', '?v=TIMESTAMP', normalized) # ?v=YYYY.MM.DD.NN
+    normalized = re.sub(r'\?[tv]=\d+', '?t=TIMESTAMP', normalized) # ?t=숫자
+    normalized = re.sub(r'\?r=\d{4}\.\d{2}\.\d{2}', '?r=TIMESTAMP', normalized) # ?r=YYYY.MM.DD
     
     # 2. JavaScript 세션 토큰 정규화 (ErW76 객체의 NfVTe 속성)
     # "NfVTe":"긴인코딩문자열" -> "NfVTe":"SESSION_TOKEN"
@@ -56,6 +61,17 @@ def normalize_dynamic_content(html: str) -> str:
     
     # 6. kjkOT 보안 객체 전체 필터링 (멀티라인 대응)
     normalized = re.sub(r'var kjkOT = \{.*?\};', 'var kjkOT = {SECURITY_TOKENS};', normalized, flags=re.DOTALL)
+
+    # 7. JavaScript 변수 내 날짜/시간 값 정규화 (예: var talkStdYmd = '20250716';)
+    normalized = re.sub(r'(var\s+\w+\s*=\s*['"])\d{8}(?:\d{6})?(['"]);', r'\1DATE_VALUE\2', normalized)
+    normalized = re.sub(r'(var\s+\w+\s*=\s*['"])\d{4}\.\d{2}\.\d{2}(['"]);', r'\1DATE_VALUE\2', normalized)
+
+    # 8. JavaScript 변수 내 IP 주소 정규화 (예: var remoteAddr = "211.106.8.234";)
+    normalized = re.sub(r'(var\s+\w+\s*=\s*['"])\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(['"]);', r'\1IP_ADDRESS\2', normalized)
+
+    # 9. JavaScript 변수 내 API 키/플러그인 키 정규화 (예: "pluginKey": "UUID", "apiKey": "API_KEY")
+    normalized = re.sub(r'("pluginKey"\s*:\s*['"])[a-f0-9-]{36}(['"])', r'\1PLUGIN_KEY\2', normalized)
+    normalized = re.sub(r'("apiKey"\s*:\s*['"])[a-f0-9]{64}(['"])', r'\1API_KEY\2', normalized)
     
     return normalized
 
@@ -80,4 +96,4 @@ def is_html_exactly_equal_filtered(html1: str, html2: str) -> bool:
     normalized1 = normalize_dynamic_content(html1)
     normalized2 = normalize_dynamic_content(html2)
     
-    return normalized1 == normalized2 
+    return normalized1 == normalized2

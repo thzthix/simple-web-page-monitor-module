@@ -1,19 +1,29 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-교보 계열사 웹페이지 변경 모니터
+다중 URL 웹페이지 변경 모니터
+여러 URL을 동시에 모니터링하고, 결과를 날짜/관계사별 폴더에 저장합니다.
 """
 
 import hashlib
 import logging
 import os
+import sys # sys 모듈 임포트
 from datetime import datetime
 from database import setup_database, get_latest_snapshot, save_snapshot
+from simple_compare import is_html_changed_filtered
 from fetcher import fetch_page
 from logger import setup_logging
 from csv_report import save_to_csv_simple
 from kyobo_sites_config import get_all_urls, safe_filename
-from simple_compare import is_html_changed_filtered
+
+# 표준 출력 인코딩 설정
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8')
+
+# 스크립트 파일의 절대 경로를 기준으로 snapshots 폴더 경로 설정
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+SNAPSHOTS_DIR = os.path.join(SCRIPT_DIR, 'snapshots')
 
 def save_html_to_file(company, service, html_content):
     """
@@ -24,7 +34,7 @@ def save_html_to_file(company, service, html_content):
     service_safe = safe_filename(service)
     
     # 경로 생성
-    dir_path = os.path.join('snapshots', today_str, company_safe)
+    dir_path = os.path.join(SNAPSHOTS_DIR, today_str, company_safe)
     os.makedirs(dir_path, exist_ok=True)
     
     # 파일명 생성
@@ -88,7 +98,11 @@ def monitor_all_sites():
     logger.info(f"총 {len(sites)}개 사이트 모니터링을 시작합니다.")
     
     for company, service, url in sites:
-        monitor_site(company, service, url, logger)
+        try:
+            monitor_site(company, service, url, logger)
+        except Exception as e:
+            logger.error(f"URL 모니터링 중 오류 발생 {url}: {e}")
+            print(f"[ERROR] {url}: {e}")
         
     logger.info("모든 사이트 모니터링이 완료되었습니다.")
 

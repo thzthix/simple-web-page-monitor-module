@@ -1,7 +1,13 @@
 # config.py
 
-# 모니터링 대상 URL
-TARGET_URL = "https://mmbr.kyobobook.co.kr/login"
+# 모니터링 대상 URL 리스트
+TARGET_URLS = [
+    "https://mmbr.kyobobook.co.kr/login",
+    "https://www.kyobo.com/dgt/web/dtm/lc/tu/login"
+]
+
+# 기본 URL (기존 호환성)
+TARGET_URL = TARGET_URLS[0]
 
 # 로그 파일 경로
 LOG_FILE = "monitor.log"

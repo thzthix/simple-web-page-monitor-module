@@ -22,7 +22,7 @@ wheels/
 MANIFEST
 
 # Virtual environments
-venv/
+vvenv/
 env/
 ENV/
 env.bak/
@@ -53,7 +53,12 @@ snapshots.db
 monitor.log
 *.csv
 reports/
+snapshots/
+*.html
 
 # Configuration files with sensitive data
 config_local.py
-.env 
+.env
+
+# Embedded Git repositories
+prototype-anti-tempering/
