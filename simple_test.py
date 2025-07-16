@@ -9,7 +9,7 @@ import requests
 import os
 import hashlib
 import datetime
-from simple_compare import is_html_changed, is_html_exactly_equal_filtered
+from simple_compare import is_html_changed, is_html_exactly_equal
 
 # 테스트 로그 파일 경로
 TEST_LOG_FILE = "simple_test.log"
@@ -140,7 +140,7 @@ def test_detection():
                 changed = is_html_changed(original_html, modified_html)
                 
                 # 변조 감지 (필터링 방식)
-                filtered_changed = not is_html_exactly_equal_filtered(original_html, modified_html)
+                filtered_changed = not is_html_exactly_equal(original_html, modified_html)
                 
                 # 로그에 상세 정보 기록
                 log_message = f"[{description}] 원본해시: {original_hash[:16]}..., 변조해시: {modified_hash[:16]}..., 기존방식: {changed}, 필터링방식: {filtered_changed}"
@@ -241,7 +241,7 @@ def main():
     try:
         # 서버 프로세스 시작
         server_process = subprocess.Popen(
-            ["python", "-m", "http.server", "8000"],
+            ["python3", "-m", "http.server", "8000"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
