@@ -8,7 +8,7 @@
 import hashlib
 import logging
 import os
-import sys # sys 모듈 임포트
+import sys
 from datetime import datetime
 from database import setup_database, get_latest_snapshot, save_snapshot
 from simple_compare import is_html_changed_filtered
@@ -55,34 +55,42 @@ def monitor_site(company, service, url, logger):
     """
     logger.info(f"모니터링 시작: {company} - {service} ({url})")
     
-    # 1. 페이지 가져오기
     html_content = fetch_page(url)
-    if not html_content:
-        logger.error("페이지를 가져올 수 없어 모니터링을 중단합니다.")
-        return
+    change_detected = False
+    change_details = ""
+    content_hash = ""
+    html_size = 0
 
-    # 2. HTML 파일로 저장
-    save_html_to_file(company, service, html_content)
+    if html_content:
+        # 2. HTML 파일로 저장
+        save_html_to_file(company, service, html_content)
 
-    # 3. 변경 감지 (필터링 로직 사용)
-    latest_snapshot = get_latest_snapshot(url)
-    change_detected = True
-    change_details = "첫 번째 스냅샷"
-
-    if latest_snapshot:
-        previous_html = latest_snapshot.get('html_content', '')
-        if not is_html_changed_filtered(previous_html, html_content):
-            change_detected = False
-            change_details = "변경 없음 (필터링 후)"
+        # 3. 변경 감지 (필터링 로직 사용)
+        latest_snapshot = get_latest_snapshot(url)
+        if latest_snapshot:
+            previous_html = latest_snapshot.get('html_content', '')
+            if not is_html_changed_filtered(previous_html, html_content):
+                change_detected = False
+                change_details = "변경 없음 (필터링 후)"
+            else:
+                change_detected = True
+                change_details = "콘텐츠 변경됨 (필터링 후)"
         else:
-            change_details = "콘텐츠 변경됨 (필터링 후)"
+            change_detected = True
+            change_details = "첫 번째 스냅샷"
 
-    # 4. 데이터베이스에 결과 저장
-    content_hash = hashlib.sha256(html_content.encode('utf-8')).hexdigest()
-    html_size = len(html_content)
-    timestamp = save_snapshot(url, content_hash, html_content, html_size, change_detected, change_details)
-    
-    # 5. CSV 요약 보고서 저장
+        # 4. 데이터베이스에 결과 저장
+        content_hash = hashlib.sha256(html_content.encode('utf-8')).hexdigest()
+        html_size = len(html_content)
+        save_snapshot(url, content_hash, html_content, html_size, change_detected, change_details)
+    else:
+        # 페이지 가져오기 실패 시
+        change_detected = True # 실패도 일종의 변경으로 간주
+        change_details = "페이지 가져오기 실패"
+        # html_content, content_hash, html_size는 기본값 또는 None으로 유지
+
+    # 5. CSV 요약 보고서 저장 (성공/실패 여부와 관계없이 항상 호출)
+    timestamp = datetime.now().isoformat()
     save_to_csv_simple(timestamp, url, change_detected, change_details, html_content, content_hash)
     
     logger.info(f"모니터링 완료: {company} - {service}")
