@@ -161,10 +161,6 @@ CSV_REPORT_SIMPLE = "test_monitoring_report_simple.csv"  # 테스트 CSV
 - User-Agent 헤더 설정
 - 10MB HTML 크기 제한
 
-### 데이터베이스 안정성
-- `with` 문을 사용한 안전한 연결 관리
-- 자동 커밋 및 연결 해제
-
 ### 에러 처리
 - 네트워크 오류 처리
 - HTML 파싱 오류 처리
@@ -215,12 +211,6 @@ def normalize_dynamic_content(html: str) -> str:
     html = re.sub(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}', 'YYYY-MM-DD HH:MM:SS', html)
     return html
 ```
-
-### 🎉 해결된 문제들
-- ✅ **동적 CSS 해시 문제 해결**: CSS/JS 타임스탬프 파라미터 자동 제거
-- ✅ **세션 토큰 오탐 해결**: JavaScript 세션 토큰 정규화
-- ✅ **타임스탬프 오탐 해결**: 로그 타임스탬프 정규화
-- ✅ **실제 변조만 감지**: 악의적 변조는 정확히 감지하면서 동적 요소는 무시
 
 ### 📊 개선된 모니터링 결과
 ```
