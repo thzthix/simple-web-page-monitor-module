@@ -34,6 +34,8 @@ def get_all_urls():
     """모든 URL을 (회사명, 서비스명, URL) 튜플의 리스트로 반환"""
     urls = []
     for company, services in KYOBO_SITES.items():
+        if company == "교보문고":
+            continue
         for service, url in services.items():
             urls.append((company, service, url))
     return urls

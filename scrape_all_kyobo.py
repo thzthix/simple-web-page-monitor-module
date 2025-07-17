@@ -28,7 +28,8 @@ KYOBO_URLS = [
 def create_folders():
     """날짜별 폴더 구조 생성"""
     date_str = datetime.now().strftime("%Y-%m-%d")
-    base_dir = f"kyobo_scraping_{date_str}"
+    # 저장 경로를 C:\Users\KICO\scrapes 로 변경
+    base_dir = os.path.join("C:\\Users\\KICO\\scrapes", f"kyobo_scraping_{date_str}")
     
     # 기본 폴더 생성
     os.makedirs(base_dir, exist_ok=True)
@@ -41,6 +42,7 @@ def create_folders():
     
     return base_dir
 
+
 def fetch_html(url):
     """HTML 가져오기"""
     headers = {
@@ -51,12 +53,12 @@ def fetch_html(url):
         response.raise_for_status()
         return response.text
     except Exception as e:
-        print(f"❌ 오류: {e}")
+        print(f"오류: {e}")
         return None
 
 def scrape_all():
     """전체 스크래핑 실행"""
-    print("🚀 교보 계열사 13개 사이트 스크래핑 시작")
+    print("교보 계열사 13개 사이트 스크래핑 시작")
     print("="*50)
     
     base_dir = create_folders()
@@ -80,17 +82,17 @@ def scrape_all():
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.write(html)
             
-            print(f"  ✅ 저장: {filepath} ({len(html):,} 문자)")
+            print(f"  저장: {filepath} ({len(html):,} 문자)")
             success += 1
         else:
-            print(f"  ❌ 실패")
+            print(f"  실패")
         
         print()
     
-    print("📋 완료 요약")
+    print("완료 요약")
     print("="*50)
-    print(f"✅ 성공: {success}/{total}")
-    print(f"📁 저장 위치: {base_dir}")
+    print(f"성공: {success}/{total}")
+    print(f"저장 위치: {base_dir}")
     
     # 폴더별 파일 개수
     for company in ["교보문고", "교보생명", "교보라이프플래닛", "교보증권"]:
