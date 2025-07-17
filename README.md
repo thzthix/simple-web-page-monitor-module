@@ -5,14 +5,6 @@
 ## 🚀 주요 기능
 
 ### 1. 내용 기반 변경 감지
-- **동적 요소 필터링**: CSS 해시, 타임스탬프 등 무의미한 변경 무시
-- **실제 내용 변경 감지**: HTML 구조와 텍스트 내용의 실제 변경만 감지
-
-### 2. 구체적 변경사항 분석
-- 스크립트 태그 추가/수정
-- 외부 링크 추가
-- 폼 구조 변경
-- 의심스러운 JavaScript 코드 (`eval`, `document.write` 등)
 
 ### 3. 데이터 저장
 - SQLite 데이터베이스에 스냅샷 저장
@@ -48,7 +40,7 @@ pip install requests beautifulsoup4
 python monitor.py
 ```
 
-### 3. 변조 감지 테스트 실행 (필수)
+### 3. 변조 감지 테스트 실행 
 ```bash
 # 변조 감지 시스템 테스트
 python simple_test.py
@@ -125,33 +117,6 @@ DATABASE_PATH = "snapshots_monitor.db"              # 데이터베이스 파일
 CSV_REPORT_SIMPLE = "monitoring_report_simple.csv"  # CSV 보고서
 ```
 
-### config_test.py (테스트용)
-```python
-TARGET_URL = "http://localhost:8000/original.html"  # 테스트 대상
-LOG_FILE = "test_monitor.log"                       # 테스트 로그 파일
-DATABASE_PATH = "test_snapshots_monitor.db"         # 테스트 데이터베이스
-CSV_REPORT_SIMPLE = "test_monitoring_report_simple.csv"  # 테스트 CSV
-```
-
-## 🚨 변경 감지 로직
-
-### 1. 내용 기반 비교
-- 외부 CSS 링크 제거 (내부 스타일은 유지)
-- 일부 meta 태그 제거 (viewport, generator)
-- 동적 data 속성 제거 (보안 관련은 유지)
-- 공백 정리 (의미있는 공백은 유지)
-
-### 2. 악의적 변경 감지
-- 스크립트 태그 추가/수정
-- 외부 링크 추가
-- 폼 구조 변경
-- 의심스러운 JavaScript 패턴:
-  - `eval()`
-  - `document.write`
-  - `innerHTML =`
-  - `<iframe>`
-  - `javascript:`
-  - `onload=`, `onclick=`
 
 ## 📈 성능 및 안정성
 
