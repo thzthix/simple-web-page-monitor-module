@@ -45,7 +45,9 @@ def normalize_dynamic_content(html: str) -> str:
     normalized = html
     
     # 1. CSS/JS 파일의 타임스탬프/버전 파라미터 제거 (?t=숫자, ?v=날짜, ?r=날짜, ?dt=날짜)
-    # `(?:\.\d+)?` 부분의 괄호 오류 수정
+    # `(?:
+.
+\d+)?` 부분의 괄호 오류 수정
     normalized = re.sub(r'\?[tvrdt]=\d{4}\.\d{2}\.\d{2}(?:\.\d+)?', '?v=TIMESTAMP', normalized) # ?v=YYYY.MM.DD.NN, ?r=YYYY.MM.DD, ?dt=YYYYMMDD
     normalized = re.sub(r'\?[tvrdt]=\d+', '?t=TIMESTAMP', normalized) # ?t=숫자
     
@@ -67,29 +69,33 @@ def normalize_dynamic_content(html: str) -> str:
     # normalized = re.sub(r'var kjkOT = \{.*?\};', 'var kjkOT = {SECURITY_TOKENS};', normalized, flags=re.DOTALL)
 
     # 7. JavaScript 변수 내 날짜/시간 값 정규화 (예: var talkStdYmd = '20250716';)
-    # `(?:\d{6})?` 부분의 괄호 오류 수정
-    normalized = re.sub(r'(var\s+\w+\s*=\s*["\"])\d{8}(?:\d{6})?(["\"])', r'\1DATE_VALUE\2', normalized) # YYYYMMDD or YYYYMMDDHHMMSS
-    normalized = re.sub(r'(var\s+\w+\s*=\s*["\"])\d{4}\.\d{2}\.\d{2}(["\"])', r'\1DATE_VALUE\2', normalized) # YYYY.MM.DD
-    normalized = re.sub(r'(value=["\"])\d{14}(["\"])', r'\1DATETIME_VALUE\2', normalized) # YYYYMMDDHHMMSS (dateCheck)
+    # `(?:
+\d{6})?` 부분의 괄호 오류 수정
+    normalized = re.sub(r'(var\s+\w+\s*=\s*[""])\d{8}(?:\d{6})?([""])', r'\1DATE_VALUE\2', normalized) # YYYYMMDD or YYYYMMDDHHMMSS
+    normalized = re.sub(r'(var\s+\w+\s*=\s*[""])\d{4}\.\d{2}\.\d{2}([""])', r'\1DATE_VALUE\2', normalized) # YYYY.MM.DD
+    normalized = re.sub(r'(value=[""])\d{14}([""])', r'\1DATETIME_VALUE\2', normalized) # YYYYMMDDHHMMSS (dateCheck)
 
     # 8. JavaScript 변수 내 IP 주소 정규화 (예: var remoteAddr = "211.106.8.234";)
-    # normalized = re.sub(r'(var\s+\w+\s*=\s*["\"])\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(["\"])', r'\1IP_ADDRESS\2', normalized)
+    # normalized = re.sub(r'(var\s+\w+\s*=\s*[""])\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}([""])', r'\1IP_ADDRESS\2', normalized)
 
     # 9. JavaScript 변수 내 API 키/플러그인 키 정규화 (예: "pluginKey": "UUID", "apiKey": "API_KEY")
-    # normalized = re.sub(r'("pluginKey"\s*:\s*["\"])[a-f0-9-]{36}(["\"])', r'\1PLUGIN_KEY\2', normalized)
-    # normalized = re.sub(r'("apiKey"\s*:\s*["\"])[a-f0-9]{64}(["\"])', r'\1API_KEY\2', normalized)
-    # normalized = re.sub(r'(var\s+TNK_SR\s*=\s*["\"])[a-f0-9]{32}(["\"])', r'\1TNK_SR_TOKEN\2', normalized) # TNK_SR
-    # normalized = re.sub(r'(_inihubClientId\s*=\s*["\"])[a-f0-9-]{36}(["\"])', r'\1INIHUB_CLIENT_ID\2', normalized) # _inihubClientId
-    # normalized = re.sub(r'(_kakaoKey\s*=\s*["\"])[a-f0-9]{32}(["\"])', r'\1KAKAO_KEY\2', normalized) # _kakaoKey
-    # normalized = re.sub(r'(adbrix_appkey\s*=\s*["\"])[a-zA-Z0-9]{20}(["\"])', r'\1ADBRIX_APPKEY\2', normalized) # adbrix_appkey
-    # normalized = re.sub(r'(adbrix_webSecretkey\s*=\s*["\"])[a-zA-Z0-9]{20}(["\"])', r'\1ADBRIX_WEBSECRETKEY\2', normalized) # adbrix_webSecretkey
-    # normalized = re.sub(r'(let\s+nth_sid\s*=\s*["\"])\d+(["\"])', r'\1NTH_SID\2', normalized) # nth_sid
+    # normalized = re.sub(r'("pluginKey"\s*:\s*[""])[a-f0-9-]{36}([""])', r'\1PLUGIN_KEY\2', normalized)
+    # normalized = re.sub(r'("apiKey"\s*:\s*[""])[a-f0-9]{64}([""])', r'\1API_KEY\2', normalized)
+    normalized = re.sub(r'(var\s+TNK_SR\s*=\s*[""])[a-f0-9]{32}([""])', r'\1TNK_SR_TOKEN\2', normalized) # TNK_SR
+    # normalized = re.sub(r'(_inihubClientId\s*=\s*[""])[a-f0-9-]{36}([""])', r'\1INIHUB_CLIENT_ID\2', normalized) # _inihubClientId
+    # normalized = re.sub(r'(_kakaoKey\s*=\s*[""])[a-f0-9]{32}([""])', r'\1KAKAO_KEY\2', normalized) # _kakaoKey
+    # normalized = re.sub(r'(adbrix_appkey\s*=\s*[""])[a-zA-Z0-9]{20}([""])', r'\1ADBRIX_APPKEY\2', normalized) # adbrix_appkey
+    # normalized = re.sub(r'(adbrix_webSecretkey\s*=\s*[""])[a-zA-Z0-9]{20}([""])', r'\1ADBRIX_WEBSECRETKEY\2', normalized) # adbrix_webSecretkey
+    # normalized = re.sub(r'(let\s+nth_sid\s*=\s*[""])\d+([""])', r'\1NTH_SID\2', normalized) # nth_sid
 
     # 10. 암호화 관련 동적 값 정규화
-    # normalized = re.sub(r'(CryptoJS\.enc\.Latin1\.parse\(\s*["\"])[a-f0-9]{16,32}(["\"]\s*\))', r'\1ENCRYPTION_KEY\2', normalized) # CryptoJS key/iv
-    # normalized = re.sub(r'(fncAesEnc\(["])[a-zA-Z0-9+/=]{20,}(["\"]\))', r'\1ENCRYPTED_DATA\2', normalized) # fncAesEnc
+    # normalized = re.sub(r'(CryptoJS\.\enc\.\Latin1\.parse\(\s*[""])[a-f0-9]{16,32}([""]\s*\))', r'\1ENCRYPTION_KEY\2', normalized) # CryptoJS key/iv
+    normalized = re.sub(r'(fncAesEnc\(["])[a-zA-Z0-9+/=]{20,}([""]\))', r'\1ENCRYPTED_DATA\2', normalized) # fncAesEnc
     # normalized = re.sub(r'(new\s+Date\(\)\.getTime\(\))', r'DYNAMIC_TIMESTAMP_CALL', normalized) # new Date().getTime()
     # normalized = re.sub(r'(ran_gen\(\))', r'RANDOM_GENERATOR_CALL', normalized) # ran_gen()
+
+    # 11. gitple-loader-frame의 title 속성 변경 (한글 깨짐 방지)
+    normalized = re.sub(r'title=""', 'title="Channel chat"', normalized)
     
     return normalized
 

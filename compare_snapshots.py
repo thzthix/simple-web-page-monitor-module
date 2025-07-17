@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-세 개의 스냅샷 HTML 파일을 비교하는 스크립트
+HTML 파일 비교 유틸리티
 """
 
 import difflib
@@ -13,16 +13,17 @@ def read_html_file(filename):
         with open(filename, 'r', encoding='utf-8') as f:
             return f.read()
     except Exception as e:
-        print(f"파일 읽기 오류 {filename}: {e}")
+        # print(f"파일 읽기 오류 {filename}: {e}") # 로그로 대체
         return None
 
 def find_differences(html1, html2, label1, label2):
-    """두 HTML 내용의 차이점을 찾아서 출력"""
-    print(f"\n=== {label1} vs {label2} 비교 ===")
+    """두 HTML 내용의 차이점을 찾아서 문자열로 반환"""
+    diff_output = []
+    diff_output.append(f"\n=== {label1} vs {label2} 비교 ===")
     
     if html1 == html2:
-        print("완전히 동일합니다.")
-        return
+        diff_output.append("완전히 동일합니다.")
+        return "\n".join(diff_output)
     
     # 라인별로 분할
     lines1 = html1.splitlines()
@@ -36,17 +37,19 @@ def find_differences(html1, html2, label1, label2):
     ))
     
     if diff:
-        print("차이점 발견:")
+        diff_output.append("차이점 발견:")
         for line in diff[:50]:  # 처음 50줄만 출력
-            print(line)
+            diff_output.append(line)
         if len(diff) > 50:
-            print(f"... (총 {len(diff)}개 라인 중 처음 50개만 표시)")
+            diff_output.append(f"... (총 {len(diff)}개 라인 중 처음 50개만 표시)")
     else:
-        print("라인별 차이는 없지만 전체 내용이 다릅니다.")
+        diff_output.append("라인별 차이는 없지만 전체 내용이 다릅니다.")
     
     # 문자 단위 차이점 찾기
     if len(html1) != len(html2):
-        print(f"길이 차이: {label1}={len(html1)} vs {label2}={len(html2)}")
+        diff_output.append(f"길이 차이: {label1}={len(html1)} vs {label2}={len(html2)}")
+
+    return "\n".join(diff_output)
 
 def extract_dynamic_elements(html):
     """동적 요소들을 추출해서 표시"""
@@ -66,38 +69,3 @@ def extract_dynamic_elements(html):
         'tokens': token_patterns,
         'csrf': csrf_patterns
     }
-
-def main():
-    # 파일 읽기
-    files = [
-        ('snapshot_1_latest.html', '최신'),
-        ('snapshot_2_latest.html', '2번째'),
-        ('snapshot_3_latest.html', '3번째')
-    ]
-    
-    contents = []
-    for filename, label in files:
-        content = read_html_file(filename)
-        if content is None:
-            return
-        contents.append((content, label, filename))
-        print(f"{label} ({filename}): {len(content)} 문자")
-    
-    # 동적 요소 분석
-    print("\n=== 동적 요소 분석 ===")
-    for content, label, filename in contents:
-        dynamic = extract_dynamic_elements(content)
-        print(f"\n{label} ({filename}):")
-        for key, values in dynamic.items():
-            if values:
-                print(f"  {key}: {values}")
-    
-    # 쌍별 비교
-    for i in range(len(contents)):
-        for j in range(i+1, len(contents)):
-            content1, label1, _ = contents[i]
-            content2, label2, _ = contents[j]
-            find_differences(content1, content2, label1, label2)
-
-if __name__ == "__main__":
-    main()
