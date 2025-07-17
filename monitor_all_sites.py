@@ -10,27 +10,11 @@ import sys
 from datetime import datetime
 import os
 
-from database import setup_database, save_snapshot
+from database import setup_database
 from logger import setup_logging
 from config.urls import KYOBO_URLS
 from scrape_all_sites import fetch_html
-
-def create_folders():
-    """날짜별 폴더 구조 생성"""
-    date_str = datetime.now().strftime("%Y-%m-%d")
-    # 저장 경로를 C:\Users\KICO\scrapes 로 변경
-    base_dir = os.path.join(r"C:\Users\KICO\scrapes", f"kyobo_scraping_{date_str}")
-    
-    # 기본 폴더 생성
-    os.makedirs(base_dir, exist_ok=True)
-    
-    # 관계사별 폴더 생성
-    companies = ["교보문고", "교보생명", "교보라이프플래닛", "교보증권"]
-    for company in companies:
-        company_dir = os.path.join(base_dir, company)
-        os.makedirs(company_dir, exist_ok=True)
-    
-    return base_dir
+from saver import create_folders, save_html_to_file, save_snapshot
 
 # 표준 출력 인코딩 설정 (Windows 환경에서 한글 깨짐 방지)
 if sys.stdout.encoding != 'utf-8':
@@ -67,12 +51,8 @@ def monitor_all_sites():
             html = fetch_html(url)
             
             if html:
-                # 파일 저장 (scrape_all_sites의 로직 재사용)
-                filename = f"{service}_{timestamp}.html"
-                filepath = os.path.join(base_dir, company, filename)
-                
-                with open(filepath, 'w', encoding='utf-8') as f:
-                    f.write(html)
+                # 파일 저장
+                filepath = save_html_to_file(base_dir, company, service, timestamp, html)
                 
                 logger.info(f"  저장: {filepath} ({len(html):,} 문자)")
                 success_count += 1

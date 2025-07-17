@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-HTML 가져오기 유틸리티
+HTML 가져오기 유틸리티 (Playwright 사용)
 """
 
-import requests
+from playwright.sync_api import sync_playwright
 
 def fetch_html(url):
-    """HTML 가져오기"""
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-    }
+    """Playwright를 사용하여 HTML 가져오기"""
     try:
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-        return response.text
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True) # 헤드리스 모드
+            page = browser.new_page()
+            page.goto(url)
+            html_content = page.content()
+            browser.close()
+            return html_content
     except Exception as e:
         print(f"오류: {e}")
         return None

@@ -45,15 +45,4 @@ def get_latest_snapshot(url):
             }
         return None
 
-def save_snapshot(url, content_hash, html_content, html_size=0, change_detected=False, change_details=None):
-    """Saves a new snapshot to the database."""
-    with sqlite3.connect(DATABASE_PATH) as conn:
-        cursor = conn.cursor()
-        timestamp = datetime.now().isoformat()
-        
-        cursor.execute(
-            "INSERT INTO snapshots (timestamp, url, content_hash, html_content, html_size, change_detected, change_details) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (timestamp, url, content_hash, html_content, html_size, change_detected, change_details)
-        )
-        conn.commit()
-        return timestamp 
+ 
