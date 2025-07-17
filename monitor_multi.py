@@ -25,29 +25,7 @@ if sys.stdout.encoding != 'utf-8':
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SNAPSHOTS_DIR = os.path.join(SCRIPT_DIR, 'snapshots')
 
-def save_html_to_file(company, service, html_content):
-    """
-    스크래핑한 HTML을 날짜/관계사/서비스별 폴더에 저장
-    """
-    today_str = datetime.now().strftime('%Y-%m-%d')
-    company_safe = safe_filename(company)
-    service_safe = safe_filename(service)
-    
-    # 경로 생성
-    dir_path = os.path.join(SNAPSHOTS_DIR, today_str, company_safe)
-    os.makedirs(dir_path, exist_ok=True)
-    
-    # 파일명 생성
-    file_name = f"{service_safe}.html"
-    file_path = os.path.join(dir_path, file_name)
-    
-    # HTML 파일 저장
-    try:
-        with open(file_path, 'w', encoding='utf-8') as f:
-            f.write(html_content)
-        logging.info(f"HTML 파일 저장 성공: {file_path}")
-    except IOError as e:
-        logging.error(f"HTML 파일 저장 실패: {file_path}, 오류: {e}")
+
 
 def monitor_site(company, service, url, logger):
     """
@@ -63,7 +41,6 @@ def monitor_site(company, service, url, logger):
 
     if html_content:
         # 2. HTML 파일로 저장
-        save_html_to_file(company, service, html_content)
 
         # 3. 변경 감지 (필터링 로직 사용)
         latest_snapshot = get_latest_snapshot(url)
