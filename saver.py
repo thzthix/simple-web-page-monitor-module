@@ -13,8 +13,8 @@ from config.config import DATABASE_PATH
 def create_folders():
     """날짜별 폴더 구조 생성"""
     date_str = datetime.now().strftime("%Y-%m-%d")
-    # 저장 경로를 C:\Users\KICO\scrapes 로 변경
-    base_dir = os.path.join(r"C:\Users\KICO\scrapes", f"kyobo_scraping_{date_str}")
+    # 저장 경로를 scrapes 폴더로 변경
+    base_dir = os.path.join("scrapes", f"kyobo_scraping_{date_str}")
     
     # 기본 폴더 생성
     os.makedirs(base_dir, exist_ok=True)

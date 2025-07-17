@@ -1,0 +1,1 @@
+README 업데이트 및 simple_compare 로직 주석 추가

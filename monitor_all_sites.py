@@ -61,6 +61,17 @@ def monitor_all_sites():
                 html_size = len(html)
                 change_detected = True # 첫 스크래핑이므로 변경으로 간주
                 change_details = "최초 스크래핑 성공"
+                # TODO: simple_compare.py의 is_html_exactly_equal_filtered 함수를 사용하여
+                # TODO: 이전 스냅샷과 현재 HTML을 비교하는 로직을 여기에 추가할 수 있습니다.
+                # TODO: 예시: 
+                # TODO: from simple_compare import is_html_exactly_equal_filtered
+                # TODO: previous_html = get_previous_html_from_db(url) # 이전 HTML을 DB에서 가져오는 함수 필요
+                # TODO: if previous_html and not is_html_exactly_equal_filtered(previous_html, html):
+                # TODO:     change_detected = True
+                # TODO:     change_details = "내용 변경 감지"
+                # TODO: else:
+                # TODO:     change_detected = False
+                # TODO:     change_details = "변경 없음 (동적 요소 필터링 후 동일)"
                 logger.info(f"  ✅ 성공")
             else:
                 change_details = "페이지 가져오기 실패"
