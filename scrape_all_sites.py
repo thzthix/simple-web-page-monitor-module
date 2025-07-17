@@ -1,32 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-교보 계열사 13개 사이트 전체 스크래핑
+HTML 가져오기 유틸리티
 """
 
-import os
 import requests
-from datetime import datetime
-
-from config.urls import KYOBO_URLS
-
-def create_folders():
-    """날짜별 폴더 구조 생성"""
-    date_str = datetime.now().strftime("%Y-%m-%d")
-    # 저장 경로를 C:\Users\KICO\scrapes 로 변경
-    base_dir = os.path.join("C:\\Users\\KICO\\scrapes", f"kyobo_scraping_{date_str}")
-    
-    # 기본 폴더 생성
-    os.makedirs(base_dir, exist_ok=True)
-    
-    # 관계사별 폴더 생성
-    companies = ["교보문고", "교보생명", "교보라이프플래닛", "교보증권"]
-    for company in companies:
-        company_dir = os.path.join(base_dir, company)
-        os.makedirs(company_dir, exist_ok=True)
-    
-    return base_dir
-
 
 def fetch_html(url):
     """HTML 가져오기"""
@@ -40,51 +18,3 @@ def fetch_html(url):
     except Exception as e:
         print(f"오류: {e}")
         return None
-
-def scrape_all():
-    """전체 스크래핑 실행"""
-    print("교보 계열사 13개 사이트 스크래핑 시작")
-    print("="*50)
-    
-    base_dir = create_folders()
-    timestamp = datetime.now().strftime("%H%M%S")
-    
-    success = 0
-    total = len(KYOBO_URLS)
-    
-    for i, (company, service, url) in enumerate(KYOBO_URLS, 1):
-        print(f"[{i}/{total}] {company} - {service}")
-        print(f"  URL: {url}")
-        
-        # HTML 가져오기
-        html = fetch_html(url)
-        
-        if html:
-            # 파일 저장
-            filename = f"{service}_{timestamp}.html"
-            filepath = os.path.join(base_dir, company, filename)
-            
-            with open(filepath, 'w', encoding='utf-8') as f:
-                f.write(html)
-            
-            print(f"  저장: {filepath} ({len(html):,} 문자)")
-            success += 1
-        else:
-            print(f"  실패")
-        
-        print()
-    
-    print("완료 요약")
-    print("="*50)
-    print(f"성공: {success}/{total}")
-    print(f"저장 위치: {base_dir}")
-    
-    # 폴더별 파일 개수
-    for company in ["교보문고", "교보생명", "교보라이프플래닛", "교보증권"]:
-        company_dir = os.path.join(base_dir, company)
-        if os.path.exists(company_dir):
-            files = [f for f in os.listdir(company_dir) if f.endswith('.html')]
-            print(f"  {company}: {len(files)}개 파일")
-
-if __name__ == "__main__":
-    scrape_all()

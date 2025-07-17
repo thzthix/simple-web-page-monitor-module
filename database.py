@@ -7,7 +7,7 @@ SQLite 데이터베이스와 관련된 모든 기능을 담당합니다.
 
 import sqlite3
 from datetime import datetime
-from config import DATABASE_PATH
+from config.config import DATABASE_PATH
 
 def setup_database():
     """Initializes the database and creates the snapshots table if it doesn't exist."""
