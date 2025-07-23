@@ -9,18 +9,19 @@ import logging
 import sys
 from datetime import datetime
 import os
+import asyncio
 
 from database import setup_database
 from logger import setup_logging
 from config.urls import KYOBO_URLS
-from scrape_all_sites import fetch_html
+from scrape_all_sites import fetch_html_async
 from saver import create_folders, save_html_to_file, save_snapshot
 
 # 표준 출력 인코딩 설정 (Windows 환경에서 한글 깨짐 방지)
 if sys.stdout.encoding != 'utf-8':
     sys.stdout.reconfigure(encoding='utf-8')
 
-def monitor_all_sites():
+async def monitor_all_sites():
     """
     모든 교보 계열사 사이트를 모니터링하고 결과를 데이터베이스에 저장
     """
@@ -48,7 +49,7 @@ def monitor_all_sites():
 
         try:
             # HTML 가져오기
-            html = fetch_html(url)
+            html = await fetch_html_async(url)
             
             if html:
                 # 파일 저장
@@ -91,4 +92,4 @@ def monitor_all_sites():
     logger.info(f"저장 위치: {base_dir}")
 
 if __name__ == "__main__":
-    monitor_all_sites()
+    asyncio.run(monitor_all_sites())
