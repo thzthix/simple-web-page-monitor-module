@@ -49,17 +49,27 @@ async def monitor_all_sites():
 
         try:
             # HTML 가져오기
-            html = await fetch_html_async(url)
+            html_results = await fetch_html_async(url)
+            initial_html = html_results.get("initial_html")
+            rendered_html = html_results.get("rendered_html")
             
-            if html:
-                # 파일 저장
-                filepath = save_html_to_file(base_dir, company, service, timestamp, html)
-                
-                logger.info(f"  저장: {filepath} ({len(html):,} 문자)")
+            html_to_process = rendered_html if rendered_html else initial_html
+
+            if html_to_process:
+                # 초기(정적) HTML 저장
+                if initial_html:
+                    initial_filepath = save_html_to_file(base_dir, company, service, f"{timestamp}_initial", initial_html)
+                    logger.info(f"  저장 (정적): {initial_filepath} ({len(initial_html):,} 문자)")
+
+                # 최종(동적) HTML 저장
+                if rendered_html:
+                    rendered_filepath = save_html_to_file(base_dir, company, service, f"{timestamp}_rendered", rendered_html)
+                    logger.info(f"  저장 (동적): {rendered_filepath} ({len(rendered_html):,} 문자)")
+
                 success_count += 1
                 
-                content_hash = hashlib.sha256(html.encode('utf-8')).hexdigest()
-                html_size = len(html)
+                content_hash = hashlib.sha256(html_to_process.encode('utf-8')).hexdigest()
+                html_size = len(html_to_process)
                 change_detected = True # 첫 스크래핑이므로 변경으로 간주
                 change_details = "최초 스크래핑 성공"
                 # TODO: simple_compare.py의 is_html_exactly_equal_filtered 함수를 사용하여
@@ -67,7 +77,7 @@ async def monitor_all_sites():
                 # TODO: 예시: 
                 # TODO: from simple_compare import is_html_exactly_equal_filtered
                 # TODO: previous_html = get_previous_html_from_db(url) # 이전 HTML을 DB에서 가져오는 함수 필요
-                # TODO: if previous_html and not is_html_exactly_equal_filtered(previous_html, html):
+                # TODO: if previous_html and not is_html_exactly_equal_filtered(previous_html, html_to_process):
                 # TODO:     change_detected = True
                 # TODO:     change_details = "내용 변경 감지"
                 # TODO: else:

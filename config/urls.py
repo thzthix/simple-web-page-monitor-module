@@ -13,6 +13,7 @@ KYOBO_URLS = [
     ("교보생명", "카카오인증서", "https://www.kyobo.com/dgt/web/dtm/lc/tu/kakaoLogin"),
     ("교보생명", "토스인증서", "https://www.kyobo.com/dgt/web/dtm/lc/tu/tossLogin"),
     ("교보생명", "사내SmartON", "https://sso.kyobo.com:5443/3rdParty/certLoginFormPage.jsp"),
+    ("교보생명", "법인로그인", "https://www.kyobo.com/dgt/web/dtm/cp/lc/corpLogin"),
     ("교보라이프플래닛", "통합PC", "https://www.lifeplanet.co.kr/lpds2/common/ua/UA01001S.dev"),
     ("교보증권", "고객포털PC", "https://www.iprovest.com/weblogic/LOginServlet")
 ]
